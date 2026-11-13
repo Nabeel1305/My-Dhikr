@@ -1,0 +1,905 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>My Dhikr</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f5f2e9; --card:#ffffff; --green:#0d5a45; --green2:#147a5d; --green3:#1f9a74;
+  --mint:#e2f0e8; --mint2:#c7e3d4; --gold:#c69c45; --gold2:#e9d39c;
+  --ink:#1c2823; --muted:#6c7a73; --line:#e7e1d2; --danger:#b4473a;
+  --r:18px; --shadow:0 2px 10px rgba(13,90,69,.07),0 1px 2px rgba(13,90,69,.05);
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family:Nunito,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-tap-highlight-color:transparent}
+body{overflow:hidden}
+button{font:inherit;color:inherit;cursor:pointer;border:0;background:none;padding:0}
+input,select,textarea{font:inherit;color:inherit}
+.ar{font-family:Amiri,"Noto Naskh Arabic","Geeza Pro",serif;direction:rtl}
+.hidden{display:none!important}
+svg{display:block}
+
+/* ---------- layout ---------- */
+#app{position:fixed;inset:0;display:flex;flex-direction:column}
+.view{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-bottom:110px}
+.wrap{max-width:560px;margin:0 auto;padding:0 16px}
+
+/* ---------- hero ---------- */
+.hero{position:relative;color:#fff;background:var(--green);padding:22px 0 64px;overflow:hidden}
+.hero::before{content:"";position:absolute;inset:0;opacity:.13;background-image:var(--pattern);background-size:56px 56px}
+.hero::after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:40px;background:var(--bg);border-radius:28px 28px 0 0}
+.hero .wrap{position:relative;z-index:1}
+.greet{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.greet .ar{font-size:30px;line-height:1.1;color:var(--gold2)}
+.hello{font-size:14px;opacity:.85;margin-top:2px}
+.dates{text-align:right;font-size:13px;line-height:1.45;opacity:.9}
+.dates b{display:block;font-weight:700;font-size:14px;opacity:1}
+.summary{position:relative;z-index:2;margin:-48px auto 0;max-width:560px;padding:0 16px}
+.summary .box{background:var(--card);border-radius:var(--r);box-shadow:var(--shadow);padding:16px 18px;display:flex;align-items:center;gap:16px}
+.summary .txt{flex:1}
+.summary .big{font-size:20px;font-weight:800;color:var(--green)}
+.summary .small{font-size:13px;color:var(--muted);margin-top:2px}
+.bar{height:8px;border-radius:8px;background:var(--mint);overflow:hidden;margin-top:10px}
+.bar i{display:block;height:100%;background:linear-gradient(90deg,var(--green2),var(--green3));border-radius:8px;transition:width .4s}
+.streak{text-align:center;min-width:64px}
+.streak .n{font-size:24px;font-weight:800;color:var(--gold)}
+.streak .l{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px}
+
+/* ---------- section titles ---------- */
+.sec{display:flex;align-items:center;justify-content:space-between;margin:22px 2px 10px}
+.sec h3{margin:0;font-size:13px;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted);font-weight:700}
+
+/* ---------- dhikr cards ---------- */
+.list{display:flex;flex-direction:column;gap:10px}
+.dk{background:var(--card);border-radius:var(--r);box-shadow:var(--shadow);display:flex;align-items:center;gap:14px;padding:14px 8px 14px 14px;border:1.5px solid transparent;transition:transform .1s}
+.dk:active{transform:scale(.985)}
+.dk.done{border-color:var(--mint2);background:linear-gradient(0deg,#fbfdfb,#fff)}
+.ring{position:relative;flex:0 0 auto}
+.ring .c{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;color:var(--green)}
+.dk .info{flex:1;min-width:0}
+.dk .name{font-weight:800;font-size:16px;line-height:1.25}
+.dk .arab{font-size:19px;color:var(--green);line-height:1.5;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dk .meta{font-size:13px;color:var(--muted);margin-top:2px;display:flex;align-items:center;gap:8px}
+.chip{display:inline-flex;align-items:center;gap:4px;font-size:11.5px;font-weight:700;padding:3px 8px;border-radius:20px;background:#f6ecd4;color:#93702a}
+.more{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;color:var(--muted)}
+.more:active{background:var(--mint)}
+.empty{text-align:center;color:var(--muted);padding:40px 20px;background:var(--card);border-radius:var(--r);box-shadow:var(--shadow)}
+.empty .ar{font-size:28px;color:var(--green);margin-bottom:6px}
+
+/* ---------- page header (calendar/settings) ---------- */
+.phead{position:relative;background:var(--green);color:#fff;padding:22px 0 26px;overflow:hidden}
+.phead::before{content:"";position:absolute;inset:0;opacity:.13;background-image:var(--pattern);background-size:56px 56px}
+.phead .wrap{position:relative}
+.phead h1{margin:0;font-size:24px;font-weight:800}
+.phead p{margin:4px 0 0;font-size:13px;opacity:.85}
+
+/* ---------- calendar ---------- */
+.card{background:var(--card);border-radius:var(--r);box-shadow:var(--shadow);padding:16px}
+.calnav{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.calnav .t{text-align:center}
+.calnav .t b{display:block;font-size:17px}
+.calnav .t span{font-size:12.5px;color:var(--muted)}
+.navbtn{width:38px;height:38px;border-radius:12px;background:var(--mint);color:var(--green);display:flex;align-items:center;justify-content:center}
+.grid{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}
+.wd{text-align:center;font-size:11px;font-weight:700;color:var(--muted);padding:4px 0}
+.day{aspect-ratio:1;border-radius:11px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:14px;font-weight:700;position:relative;background:#faf8f2;color:var(--ink)}
+.day.out{visibility:hidden}
+.day.future{color:#c3bfb3;background:transparent}
+.day.p1{background:#eef6f1}
+.day.p2{background:var(--mint2)}
+.day.full{background:var(--green2);color:#fff}
+.day.today{box-shadow:inset 0 0 0 2px var(--gold)}
+.day.sel{outline:2.5px solid var(--green);outline-offset:1px}
+.day span{line-height:1.05}
+.day .hd{font-size:9.5px;font-weight:700;opacity:.55;line-height:1;margin-top:2px;font-family:Nunito,sans-serif}
+.day.full .hd{opacity:.8}
+.day .dot{position:absolute;bottom:5px;width:4px;height:4px;border-radius:50%;background:var(--gold)}
+.legend{display:flex;gap:14px;justify-content:center;margin-top:12px;font-size:11.5px;color:var(--muted)}
+.legend span{display:inline-flex;align-items:center;gap:5px}
+.legend i{width:12px;height:12px;border-radius:4px;display:inline-block}
+.select{width:100%;padding:12px 14px;border-radius:14px;border:1.5px solid var(--line);background:var(--card);font-weight:700;appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236c7a73' stroke-width='2' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:12px}
+.stat{background:var(--card);border-radius:16px;box-shadow:var(--shadow);padding:12px 8px;text-align:center}
+.stat b{display:block;font-size:20px;color:var(--green)}
+.stat span{font-size:11.5px;color:var(--muted)}
+.dayhead{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px}
+.dayhead b{font-size:16px}
+.dayhead span{font-size:12.5px;color:var(--muted)}
+.row{display:flex;align-items:center;gap:10px;padding:10px 0;border-top:1px solid var(--line)}
+.row:first-of-type{border-top:0}
+.row .n{flex:1;font-weight:700;font-size:14.5px}
+.row .n small{display:block;font-weight:600;color:var(--muted);font-size:12px}
+.row .v{font-weight:800;color:var(--green);font-size:14px;white-space:nowrap}
+.mini{height:6px;border-radius:6px;background:var(--mint);overflow:hidden;margin-top:6px}
+.mini i{display:block;height:100%;background:var(--green2)}
+.ok{color:var(--gold);font-weight:800}
+.otd{margin-top:12px}
+.otd .row .v{color:var(--ink)}
+
+/* ---------- settings ---------- */
+.set{background:var(--card);border-radius:var(--r);box-shadow:var(--shadow);overflow:hidden}
+.si{display:flex;align-items:center;gap:12px;padding:15px 16px;border-top:1px solid var(--line)}
+.si:first-child{border-top:0}
+.si .l{flex:1}
+.si .l b{display:block;font-weight:700;font-size:15px}
+.si .l span{font-size:12.5px;color:var(--muted)}
+.si input[type=time]{border:1.5px solid var(--line);border-radius:10px;padding:7px 9px;background:#faf8f2;font-weight:700}
+.sw{position:relative;width:48px;height:28px;border-radius:28px;background:#d9d4c6;transition:background .2s;flex:0 0 auto}
+.sw::after{content:"";position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.2);transition:transform .2s}
+.sw.on{background:var(--green2)}
+.sw.on::after{transform:translateX(20px)}
+.note{font-size:12.5px;color:var(--muted);margin:10px 4px 0;line-height:1.5}
+.link{color:var(--green);font-weight:700;font-size:15px}
+
+/* ---------- tab bar & fab ---------- */
+.tabs{position:fixed;left:0;right:0;bottom:0;background:rgba(255,255,255,.96);backdrop-filter:blur(8px);border-top:1px solid var(--line);display:flex;justify-content:space-around;padding:8px 0 calc(8px + env(safe-area-inset-bottom));z-index:5}
+.tab{display:flex;flex-direction:column;align-items:center;gap:3px;font-size:11.5px;font-weight:700;color:#9aa49f;padding:4px 18px;border-radius:14px}
+.tab svg{width:24px;height:24px}
+.tab.on{color:var(--green)}
+.fab{position:fixed;right:18px;bottom:84px;z-index:6;height:56px;padding:0 22px 0 18px;border-radius:28px;background:var(--gold);color:#fff;font-weight:800;font-size:15px;display:flex;align-items:center;gap:8px;box-shadow:0 6px 16px rgba(198,156,69,.45)}
+.fab svg{width:22px;height:22px}
+.fab:active{transform:scale(.97)}
+
+/* ---------- counter screen ---------- */
+#counter{position:fixed;inset:0;z-index:10;background:var(--bg);display:flex;flex-direction:column}
+#counter .top{background:var(--green);color:#fff;position:relative;overflow:hidden;padding:14px 8px 18px}
+#counter .top::before{content:"";position:absolute;inset:0;opacity:.13;background-image:var(--pattern);background-size:56px 56px}
+#counter .bar1{position:relative;display:flex;align-items:center;gap:6px}
+.ib{width:44px;height:44px;border-radius:14px;display:flex;align-items:center;justify-content:center}
+.ib:active{background:rgba(255,255,255,.12)}
+.ib svg{width:24px;height:24px}
+#counter .ttl{flex:1;text-align:center;font-weight:800;font-size:17px;line-height:1.25;padding:0 4px}
+#counter .ttl small{display:block;font-weight:600;font-size:12.5px;opacity:.8}
+#tapzone{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;touch-action:manipulation;user-select:none;-webkit-user-select:none;padding:12px 16px;position:relative}
+#cArab{font-size:30px;color:var(--green);text-align:center;line-height:1.6;margin-bottom:10px;min-height:10px;max-width:520px}
+.bigring{position:relative;width:min(74vw,300px);height:min(74vw,300px)}
+.bigring svg{width:100%;height:100%;transform:rotate(-90deg)}
+.bigring .mid{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.bigring .num{font-size:min(19vw,76px);font-weight:800;color:var(--green);line-height:1;font-variant-numeric:tabular-nums;transition:transform .08s}
+.bigring .num.bump{transform:scale(1.06)}
+.bigring .of{font-size:15px;color:var(--muted);margin-top:6px;font-weight:700}
+.bigring .done{margin-top:8px}
+.tapbg{position:absolute;inset:14%;border-radius:50%;background:radial-gradient(circle,#fff 0%,#fff 60%,rgba(255,255,255,0) 72%)}
+.hint{margin-top:16px;font-size:13px;color:var(--muted)}
+.ripple{position:absolute;border-radius:50%;background:rgba(20,122,93,.16);pointer-events:none;transform:translate(-50%,-50%) scale(0);animation:rip .5s ease-out forwards}
+@keyframes rip{to{transform:translate(-50%,-50%) scale(1);opacity:0}}
+.tools{display:flex;justify-content:center;gap:12px;padding:12px 16px calc(18px + env(safe-area-inset-bottom))}
+.tool{display:flex;flex-direction:column;align-items:center;gap:5px;font-size:11.5px;font-weight:700;color:var(--muted);width:74px}
+.tool .b{width:52px;height:52px;border-radius:18px;background:var(--card);box-shadow:var(--shadow);display:flex;align-items:center;justify-content:center;color:var(--green)}
+.tool .b svg{width:22px;height:22px}
+.tool.off .b{color:#b6bdb9}
+.tool:active .b{transform:scale(.95)}
+
+/* ---------- sheet & modal ---------- */
+.scrim{position:fixed;inset:0;background:rgba(18,30,25,.42);z-index:20;opacity:0;pointer-events:none;transition:opacity .2s}
+.scrim.show{opacity:1;pointer-events:auto}
+.sheet{position:fixed;left:0;right:0;bottom:0;z-index:21;background:var(--card);border-radius:24px 24px 0 0;padding:10px 20px calc(20px + env(safe-area-inset-bottom));transform:translateY(105%);transition:transform .25s ease;max-width:560px;margin:0 auto;max-height:92vh;overflow:auto}
+.sheet.show{transform:none}
+.grab{width:40px;height:5px;border-radius:5px;background:var(--line);margin:0 auto 14px}
+.sheet h2{margin:0 0 14px;font-size:20px}
+.fl{display:block;font-size:12.5px;font-weight:700;color:var(--muted);margin:14px 0 6px;letter-spacing:.3px}
+.in{width:100%;padding:13px 14px;border-radius:14px;border:1.5px solid var(--line);background:#faf8f2;font-size:16px;outline:none}
+.in:focus{border-color:var(--green3);background:#fff}
+.in.ar{font-size:22px;text-align:right}
+.chips{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}
+.qc{padding:7px 13px;border-radius:20px;background:var(--mint);color:var(--green);font-weight:700;font-size:13.5px}
+.btn{display:block;width:100%;padding:15px;border-radius:16px;background:var(--green);color:#fff;font-weight:800;font-size:16px;margin-top:20px;text-align:center}
+.btn:active{background:#0a4a39}
+.btn.ghost{background:transparent;color:var(--danger);margin-top:8px}
+.btn.light{background:var(--mint);color:var(--green)}
+.menu .mi{display:flex;align-items:center;gap:14px;width:100%;padding:14px 4px;font-weight:700;font-size:16px;border-top:1px solid var(--line);text-align:left}
+.menu .mi:first-of-type{border-top:0}
+.menu .mi svg{width:22px;height:22px;color:var(--green)}
+.menu .mi.del,.menu .mi.del svg{color:var(--danger)}
+.modal{position:fixed;left:50%;top:50%;z-index:22;transform:translate(-50%,-46%) scale(.96);width:calc(100% - 48px);max-width:360px;background:var(--card);border-radius:22px;padding:22px 20px 16px;opacity:0;pointer-events:none;transition:all .2s;text-align:center}
+.modal.show{opacity:1;pointer-events:auto;transform:translate(-50%,-50%)}
+.modal h3{margin:0 0 8px;font-size:19px}
+.modal p{margin:0;color:var(--muted);font-size:14.5px;line-height:1.5}
+.modal .acts{display:flex;gap:10px;margin-top:18px}
+.modal .acts button{flex:1;padding:13px;border-radius:14px;font-weight:800}
+.modal .no{background:#f1eee5}
+.modal .yes{background:var(--danger);color:#fff}
+.modal .yes.green{background:var(--green)}
+#toast{position:fixed;left:50%;bottom:150px;z-index:30;transform:translateX(-50%) translateY(10px);background:var(--ink);color:#fff;padding:11px 18px;border-radius:14px;font-weight:700;font-size:14px;opacity:0;pointer-events:none;transition:all .25s;max-width:86vw;text-align:center}
+#toast.show{opacity:1;transform:translateX(-50%)}
+.celebrate{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.star{position:absolute;width:14px;height:14px;opacity:0;animation:fly 1.1s ease-out forwards}
+@keyframes fly{0%{opacity:1;transform:translate(0,0) rotate(0) scale(.6)}100%{opacity:0;transform:translate(var(--dx),var(--dy)) rotate(180deg) scale(1)}}
+</style>
+</head>
+<body>
+<div id="app">
+  <!-- TODAY -->
+  <section class="view" id="v-today">
+    <div class="hero">
+      <div class="wrap">
+        <div class="greet">
+          <div>
+            <div class="ar">ذِكْرُ ٱللَّٰهِ</div>
+            <div class="hello" id="hello">Assalamu alaikum</div>
+          </div>
+          <div class="dates"><b id="gDate"></b><span id="hDate"></span></div>
+        </div>
+      </div>
+    </div>
+    <div class="summary">
+      <div class="box">
+        <div class="txt">
+          <div class="big" id="sumBig">0 of 0 done</div>
+          <div class="small" id="sumSmall">Today's dhikr</div>
+          <div class="bar"><i id="sumBar" style="width:0"></i></div>
+        </div>
+        <div class="streak"><div class="n" id="streakN">0</div><div class="l">day streak</div></div>
+      </div>
+    </div>
+    <div class="wrap">
+      <div class="sec"><h3>My dhikr</h3></div>
+      <div class="list" id="list"></div>
+    </div>
+  </section>
+
+  <!-- CALENDAR -->
+  <section class="view hidden" id="v-cal">
+    <div class="phead"><div class="wrap"><h1>Calendar</h1><p>Look back at every day of your dhikr</p></div></div>
+    <div class="wrap" style="margin-top:16px">
+      <select class="select" id="calFilter"></select>
+      <div class="stats">
+        <div class="stat"><b id="stDays">0</b><span>days complete</span></div>
+        <div class="stat"><b id="stTotal">0</b><span>total this month</span></div>
+        <div class="stat"><b id="stBest">0</b><span>best streak</span></div>
+      </div>
+      <div class="card" style="margin-top:12px">
+        <div class="calnav">
+          <button class="navbtn" id="prevM" aria-label="Previous month"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button>
+          <div class="t"><b id="mTitle"></b><span id="mHijri"></span></div>
+          <button class="navbtn" id="nextM" aria-label="Next month"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg></button>
+        </div>
+        <div class="grid" id="grid"></div>
+        <div class="legend"><span><i style="background:#eef6f1"></i>Started</span><span><i style="background:var(--mint2)"></i>Over half</span><span><i style="background:var(--green2)"></i>Complete</span></div>
+      </div>
+      <div class="sec"><h3 id="dayTitle">Day</h3></div>
+      <div class="card" id="dayCard"></div>
+      <div id="otdWrap" class="hidden">
+        <div class="sec"><h3>On this day</h3></div>
+        <div class="card otd" id="otd"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SETTINGS -->
+  <section class="view hidden" id="v-set">
+    <div class="phead"><div class="wrap"><h1>Settings</h1><p>Reminders, counting and backup</p></div></div>
+    <div class="wrap" style="margin-top:16px">
+      <div class="sec" style="margin-top:4px"><h3>Reminders</h3></div>
+      <div class="set">
+        <div class="si"><div class="l"><b>Daily reminders</b><span>Only if you haven't finished all your dhikr</span></div><button class="sw" id="swRemind" aria-label="Daily reminders"></button></div>
+        <div class="si"><div class="l"><b>Morning</b><span>A nudge to start your dhikr</span></div><input type="time" id="tMorning"></div>
+        <div class="si"><div class="l"><b>Night</b><span>If something is still left for today</span></div><input type="time" id="tNight"></div>
+      </div>
+      <p class="note" id="remNote">Reminders will pop up once this is installed as an app on your phone. In this test version your times are saved, but notifications can't be sent.</p>
+
+      <div class="sec"><h3>Islamic date</h3></div>
+      <div class="set">
+        <div class="si"><div class="l"><b id="hjToday"></b><span id="hjAdjTxt">Calculated date</span></div>
+          <div style="display:flex;align-items:center;gap:6px">
+            <button class="navbtn" id="hjMinus" aria-label="One day earlier"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M5 12h14"/></svg></button>
+            <button class="navbtn" id="hjPlus" aria-label="One day later"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
+          </div>
+        </div>
+      </div>
+      <p class="note">The Islamic date is an estimate. Depending on the moon sighting where you are, it can be a day or two off. If your mosque's date is different, adjust it here and the whole app follows.</p>
+
+      <div class="sec"><h3>Counting</h3></div>
+      <div class="set">
+        <div class="si"><div class="l"><b>Vibrate on each count</b><span>A light tap you can feel</span></div><button class="sw" id="swVib" aria-label="Vibrate"></button></div>
+        <div class="si"><div class="l"><b>Vibrate when target is reached</b><span>Two long buzzes, so you know with your eyes closed. Three when all your dhikr for the day are done.</span></div><button class="sw" id="swVibT" aria-label="Vibrate at target"></button></div>
+        <div class="si"><div class="l"><b>Click sound</b><span>A soft click on each count</span></div><button class="sw" id="swSound" aria-label="Sound"></button></div>
+      </div>
+
+      <div class="sec"><h3>Your data</h3></div>
+      <div class="set">
+        <button class="si" id="bkSave" style="width:100%;text-align:left"><div class="l"><b class="link">Save a backup</b><span>Send it to Google Drive, WhatsApp or email</span></div></button>
+        <button class="si" id="bkRestore" style="width:100%;text-align:left"><div class="l"><b class="link">Restore from a backup</b><span>Bring everything back on a new phone</span></div></button>
+      </div>
+      <p class="note" id="bkNote">Your dhikr and history are saved on this device.</p>
+    </div>
+  </section>
+
+  <nav class="tabs">
+    <button class="tab on" data-tab="today"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><circle cx="12" cy="5" r="1.6"/><circle cx="17" cy="7" r="1.6"/><circle cx="19" cy="12" r="1.6"/><circle cx="17" cy="17" r="1.6"/><circle cx="12" cy="19" r="1.6"/><circle cx="7" cy="17" r="1.6"/><circle cx="5" cy="12" r="1.6"/><circle cx="7" cy="7" r="1.6"/></svg>Today</button>
+    <button class="tab" data-tab="cal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="15.5" rx="3"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg>Calendar</button>
+    <button class="tab" data-tab="set"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg>Settings</button>
+  </nav>
+  <button class="fab" id="fab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>Add dhikr</button>
+</div>
+
+<!-- COUNTER -->
+<section id="counter" class="hidden">
+  <div class="top">
+    <div class="bar1">
+      <button class="ib" id="cBack" aria-label="Back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button>
+      <div class="ttl"><span id="cName"></span><small id="cSub"></small></div>
+      <button class="ib" id="cMore" aria-label="Options"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5.5" r="1.9"/><circle cx="12" cy="12" r="1.9"/><circle cx="12" cy="18.5" r="1.9"/></svg></button>
+    </div>
+  </div>
+  <div id="tapzone">
+    <div class="ar" id="cArab"></div>
+    <div class="bigring">
+      <div class="tapbg"></div>
+      <svg viewBox="0 0 120 120">
+        <circle cx="60" cy="60" r="52" fill="none" stroke="#e2f0e8" stroke-width="8"/>
+        <circle id="cArc" cx="60" cy="60" r="52" fill="none" stroke="#147a5d" stroke-width="8" stroke-linecap="round" stroke-dasharray="326.73" stroke-dashoffset="326.73" style="transition:stroke-dashoffset .25s,stroke .3s"/>
+      </svg>
+      <div class="mid">
+        <div class="num" id="cNum">0</div>
+        <div class="of" id="cOf">of 100</div>
+        <div class="done hidden" id="cDone"><span class="chip">✓ Target reached</span></div>
+      </div>
+    </div>
+    <div class="hint" id="cHint">Tap anywhere here to count</div>
+    <div class="celebrate" id="celebrate"></div>
+  </div>
+  <div class="tools">
+    <button class="tool" id="tUndo"><span class="b"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14L4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 010 11H11"/></svg></span>Undo</button>
+    <button class="tool" id="tReset"><span class="b"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 11a8 8 0 10-2.3 5.7"/><path d="M20 5v6h-6"/></svg></span>Reset</button>
+    <button class="tool" id="tVib"><span class="b"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="3" width="10" height="18" rx="2.5"/><path d="M3 9v6M21 9v6"/></svg></span>Vibrate</button>
+    <button class="tool" id="tSnd"><span class="b"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M16.5 8.5a5 5 0 010 7"/></svg></span>Sound</button>
+  </div>
+</section>
+
+<div class="scrim" id="scrim"></div>
+
+<!-- add / edit sheet -->
+<div class="sheet" id="sheetEdit">
+  <div class="grab"></div>
+  <h2 id="eTitle">Add dhikr</h2>
+  <label class="fl" for="eName">NAME</label>
+  <input class="in" id="eName" placeholder="e.g. SubhanAllah" maxlength="60" autocomplete="off">
+  <label class="fl" for="eArab">ARABIC (OPTIONAL)</label>
+  <input class="in ar" id="eArab" placeholder="سُبْحَانَ ٱللَّٰهِ" maxlength="120" autocomplete="off" dir="rtl">
+  <label class="fl" for="eTarget">DAILY TARGET</label>
+  <input class="in" id="eTarget" type="number" inputmode="numeric" min="1" max="100000" placeholder="100">
+  <div class="chips"><button class="qc" data-q="33">33</button><button class="qc" data-q="99">99</button><button class="qc" data-q="100">100</button><button class="qc" data-q="313">313</button><button class="qc" data-q="1000">1000</button></div>
+  <button class="btn" id="eSave">Save</button>
+  <button class="btn ghost hidden" id="eDelete">Delete this dhikr</button>
+</div>
+
+<!-- options menu -->
+<div class="sheet menu" id="sheetMenu">
+  <div class="grab"></div>
+  <h2 id="mName">Dhikr</h2>
+  <button class="mi" id="mCount"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 8v8M8 12h8"/></svg>Open counter</button>
+  <button class="mi" id="mEdit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16v4z"/><path d="M13.5 6.5l4 4"/></svg>Edit name or target</button>
+  <button class="mi" id="mHist"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="15.5" rx="3"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg>See its calendar</button>
+  <button class="mi del" id="mDel"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 002 2h6a2 2 0 002-2l1-12M9 7V4h6v3"/></svg>Delete</button>
+</div>
+
+<!-- restore sheet -->
+<div class="sheet" id="sheetRestore">
+  <div class="grab"></div>
+  <h2>Restore from a backup</h2>
+  <p class="note" style="margin:0 0 4px">Pick the backup file you saved (for example from Google Drive or WhatsApp). Everything comes back: your dhikr, every day's counts and your settings.</p>
+  <button class="btn" id="rPick">Choose backup file</button>
+  <input type="file" id="rFile" accept=".json,application/json,text/plain" class="hidden">
+  <p class="note" style="margin:18px 0 6px">Or paste the backup text:</p>
+  <textarea class="in" id="rText" rows="4" style="font-size:13px;font-family:ui-monospace,monospace"></textarea>
+  <button class="btn light" id="rGo">Restore pasted text</button>
+</div>
+
+<div class="sheet" id="sheetWelcome">
+  <div class="grab"></div>
+  <div class="ar" style="text-align:center;font-size:32px;color:var(--green);margin:4px 0 2px">بِسْمِ ٱللَّٰهِ</div>
+  <h2 style="text-align:center;margin-bottom:6px">Welcome to My Dhikr</h2>
+  <p class="note" style="text-align:center;margin:0">Starting fresh, or moving from another phone?</p>
+  <button class="btn" id="wFresh">Start fresh</button>
+  <button class="btn light" id="wRestore" style="margin-top:10px">Restore my backup</button>
+</div>
+
+<div class="modal" id="modal">
+  <h3 id="mdT"></h3>
+  <p id="mdP"></p>
+  <div class="acts"><button class="no" id="mdNo">Cancel</button><button class="yes" id="mdYes">Delete</button></div>
+</div>
+<div id="toast"></div>
+
+<script>
+(() => {
+'use strict';
+// ---------- pattern (8-point star) ----------
+const star = `<svg xmlns='http://www.w3.org/2000/svg' width='56' height='56' viewBox='0 0 56 56'><g fill='none' stroke='%23f3d48a' stroke-width='1.2'><rect x='16' y='16' width='24' height='24'/><rect x='16' y='16' width='24' height='24' transform='rotate(45 28 28)'/><circle cx='28' cy='28' r='5'/><path d='M0 0l8 8M56 0l-8 8M0 56l8-8M56 56l-8-8'/></g></svg>`;
+document.documentElement.style.setProperty('--pattern', `url("data:image/svg+xml,${star.replace(/#/g, '%23').replace(/"/g, "'")}")`);
+
+// ---------- storage ----------
+const KEY = 'dhikr.v1';
+const $ = id => document.getElementById(id);
+const pad = n => String(n).padStart(2, '0');
+const keyOf = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+const fromKey = k => { const [y, m, d] = k.split('-').map(Number); return new Date(y, m - 1, d); };
+const todayKey = () => keyOf(new Date());
+const uid = () => Math.random().toString(36).slice(2, 9);
+
+function seed() {
+  const t = todayKey();
+  const mk = (name, ar, target) => ({ id: uid(), name, ar, target, created: t, targets: [{ from: t, t: target }] });
+  return {
+    dhikrs: [
+      mk('SubhanAllahi wa bihamdihi', 'سُبْحَانَ ٱللَّٰهِ وَبِحَمْدِهِ', 100),
+      mk('La hawla wa la quwwata illa billah', 'لَا حَوْلَ وَلَا قُوَّةَ إِلَّا بِٱللَّٰهِ', 155),
+      mk('Ya Azeez', 'يَا عَزِيزُ', 94),
+      mk('Hasbiyallahu la ilaha illa huwa', 'حَسْبِيَ ٱللَّٰهُ لَا إِلَٰهَ إِلَّا هُوَ', 7),
+      mk("Ya Naafi'", 'يَا نَافِعُ', 41)
+    ],
+    log: {},
+    settings: { remind: true, morning: '07:00', night: '21:00', vibrate: true, vibTarget: true, sound: false, hijriAdj: 0 }
+  };
+}
+let FRESH = false;
+function load() {
+  try { const j = JSON.parse(localStorage.getItem(KEY)); if (j && Array.isArray(j.dhikrs) && j.log) return j; } catch (e) {}
+  // The phone app keeps its own saved copy too; use it if the page storage is empty.
+  try { if (window.DhikrNative && DhikrNative.loadSaved) { let j = JSON.parse(DhikrNative.loadSaved() || 'null'); if (j && j.app === 'my-dhikr') j = j.data; if (j && Array.isArray(j.dhikrs) && j.log) return j; } } catch (e) {}
+  FRESH = true;
+  return seed();
+}
+let S = load();
+const wrapBackup = () => JSON.stringify({ app: 'my-dhikr', version: 1, saved: new Date().toISOString(), data: S });
+function unwrapBackup(text) {
+  const j = JSON.parse(text);
+  const d = j && j.app === 'my-dhikr' ? j.data : j;
+  if (!d || !Array.isArray(d.dhikrs) || !d.log) throw new Error('not a backup');
+  d.settings = Object.assign(seed().settings, d.settings || {});
+  return d;
+}
+let nativeT = 0;
+function save() {
+  try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {}
+  syncNative();
+  clearTimeout(nativeT);
+  nativeT = setTimeout(() => { try { if (window.DhikrNative && DhikrNative.autoBackup) DhikrNative.autoBackup(wrapBackup()); } catch (e) {} }, 1500);
+}
+// The phone app provides window.DhikrNative for real notifications.
+function syncNative() {
+  try {
+    if (window.DhikrNative && DhikrNative.update) {
+      DhikrNative.update(JSON.stringify({ settings: S.settings, doneToday: allDone(todayKey()), today: todayKey(),
+        all: active().map(d => d.name), left: active().filter(d => countOn(todayKey(), d.id) < targetOn(todayKey(), d)).map(d => d.name) }));
+    }
+  } catch (e) {}
+}
+
+// ---------- model helpers ----------
+const active = () => S.dhikrs.filter(d => !d.deleted);
+const byId = id => S.dhikrs.find(d => d.id === id);
+function existedOn(d, k) { return d.created <= k && (!d.deleted || k < d.deleted); }
+function entry(k, id) { return (S.log[k] || {})[id]; }
+function countOn(k, id) { const e = entry(k, id); return e ? e.c : 0; }
+// The target a dhikr had on a given day: what was saved that day, otherwise its target history.
+function targetOn(k, d) {
+  const e = entry(k, d.id); if (e && e.t) return e.t;
+  let t = d.target;
+  if (Array.isArray(d.targets)) for (const h of d.targets) { if (h.from <= k) t = h.t; }
+  return t;
+}
+function noteTarget(d, t) {
+  const k = todayKey();
+  d.targets = Array.isArray(d.targets) ? d.targets : [{ from: d.created, t: d.target }];
+  const last = d.targets[d.targets.length - 1];
+  if (last && last.from === k) last.t = t; else d.targets.push({ from: k, t });
+}
+function dhikrsOn(k, filterId) {
+  if (filterId && filterId !== 'all') { const d = byId(filterId); return d && (existedOn(d, k) || entry(k, d.id)) ? [d] : []; }
+  return S.dhikrs.filter(d => existedOn(d, k) || entry(k, d.id));
+}
+function ratioOn(k, filterId) {
+  const ds = dhikrsOn(k, filterId);
+  if (!ds.length) return { r: 0, any: false, total: 0, n: 0, done: 0 };
+  let sum = 0, any = false, total = 0, done = 0;
+  for (const d of ds) {
+    const c = countOn(k, d.id), t = targetOn(k, d);
+    if (c > 0) any = true;
+    total += c; sum += Math.min(1, c / t); if (c >= t) done++;
+  }
+  return { r: sum / ds.length, any, total, n: ds.length, done };
+}
+function allDone(k, filterId) { const x = ratioOn(k, filterId); return x.n > 0 && x.done === x.n; }
+function streak(filterId) {
+  let d = new Date(), n = 0;
+  if (!allDone(keyOf(d), filterId)) d.setDate(d.getDate() - 1);
+  while (allDone(keyOf(d), filterId)) { n++; d.setDate(d.getDate() - 1); }
+  return n;
+}
+function bestStreak(filterId) {
+  const keys = Object.keys(S.log).sort();
+  if (!keys.length) return 0;
+  let best = 0, run = 0, d = fromKey(keys[0]); const end = new Date();
+  while (d <= end) { if (allDone(keyOf(d), filterId)) { run++; best = Math.max(best, run); } else run = 0; d.setDate(d.getDate() + 1); }
+  return best;
+}
+function setCount(id, c) {
+  const k = todayKey(), d = byId(id);
+  S.log[k] = S.log[k] || {};
+  S.log[k][id] = { c: Math.max(0, c), t: d.target };
+  if (S.log[k][id].c === 0) delete S.log[k][id];
+  if (!Object.keys(S.log[k]).length) delete S.log[k];
+  save();
+}
+
+// ---------- formatting ----------
+const fmtG = (d, o) => d.toLocaleDateString('en-GB', o);
+const HFMT = {};
+function hijri(d, opts = { day: 'numeric', month: 'long', year: 'numeric' }) {
+  try {
+    const adj = (S.settings && S.settings.hijriAdj) || 0;
+    const x = new Date(d.getFullYear(), d.getMonth(), d.getDate() + adj, 12);
+    const key = JSON.stringify(opts);
+    HFMT[key] = HFMT[key] || new Intl.DateTimeFormat('en-u-ca-islamic-umalqura', opts);
+    return HFMT[key].format(x).replace(/\s?AH$/, ' AH');
+  } catch (e) { return ''; }
+}
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const num = n => n.toLocaleString('en');
+
+function ringSVG(size, frac, done) {
+  const r = size / 2 - 4, C = 2 * Math.PI * r, off = C * (1 - Math.min(1, frac));
+  return `<svg width="${size}" height="${size}" style="transform:rotate(-90deg)"><circle cx="${size / 2}" cy="${size / 2}" r="${r}" fill="none" stroke="#e2f0e8" stroke-width="5"/><circle cx="${size / 2}" cy="${size / 2}" r="${r}" fill="none" stroke="${done ? '#c69c45' : '#147a5d'}" stroke-width="5" stroke-linecap="round" stroke-dasharray="${C}" stroke-dashoffset="${off}"/></svg>`;
+}
+
+// ---------- TODAY ----------
+function renderToday() {
+  const now = new Date(), h = now.getHours(), k = todayKey();
+  $('hello').textContent = h < 12 ? 'Assalamu alaikum · Good morning' : h < 17 ? 'Assalamu alaikum · Good afternoon' : 'Assalamu alaikum · Good evening';
+  $('gDate').textContent = fmtG(now, { weekday: 'long', day: 'numeric', month: 'long' });
+  $('hDate').textContent = hijri(now);
+  const ds = active();
+  const doneN = ds.filter(d => countOn(k, d.id) >= targetOn(k, d)).length;
+  $('sumBig').textContent = ds.length ? (doneN === ds.length ? 'All done today · MashaAllah' : `${doneN} of ${ds.length} done`) : 'No dhikr yet';
+  const tot = ds.reduce((a, d) => a + countOn(k, d.id), 0);
+  $('sumSmall').textContent = `${num(tot)} recited today`;
+  $('sumBar').style.width = (ds.length ? ratioOn(k).r * 100 : 0) + '%';
+  $('streakN').textContent = streak();
+  const L = $('list');
+  if (!ds.length) {
+    L.innerHTML = `<div class="empty"><div class="ar">بِسْمِ ٱللَّٰهِ</div>Tap <b>Add dhikr</b> to add your first one.</div>`;
+    return;
+  }
+  L.innerHTML = ds.map(d => {
+    const c = countOn(k, d.id), t = targetOn(k, d), done = c >= t;
+    return `<div class="dk ${done ? 'done' : ''}" data-id="${d.id}">
+      <div class="ring">${ringSVG(54, c / t, done)}<div class="c">${done ? '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#c69c45" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>' : Math.round(Math.min(1, c / t) * 100) + '%'}</div></div>
+      <div class="info">
+        <div class="name">${esc(d.name)}</div>
+        ${d.ar ? `<div class="arab ar">${esc(d.ar)}</div>` : ''}
+        <div class="meta"><span><b style="color:var(--ink)">${num(c)}</b> / ${num(t)}</span>${done ? '<span class="chip">Done</span>' : ''}</div>
+      </div>
+      <button class="more" data-more="${d.id}" aria-label="Options"><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5.5" r="1.9"/><circle cx="12" cy="12" r="1.9"/><circle cx="12" cy="18.5" r="1.9"/></svg></button>
+    </div>`;
+  }).join('');
+}
+$('list').addEventListener('click', e => {
+  const m = e.target.closest('[data-more]');
+  if (m) { openMenu(m.dataset.more); return; }
+  const c = e.target.closest('.dk');
+  if (c) openCounter(c.dataset.id);
+});
+
+// ---------- tabs ----------
+let tab = 'today';
+function showTab(t) {
+  tab = t;
+  document.querySelectorAll('.tab').forEach(b => b.classList.toggle('on', b.dataset.tab === t));
+  $('v-today').classList.toggle('hidden', t !== 'today');
+  $('v-cal').classList.toggle('hidden', t !== 'cal');
+  $('v-set').classList.toggle('hidden', t !== 'set');
+  $('fab').classList.toggle('hidden', t !== 'today');
+  if (t === 'today') renderToday();
+  if (t === 'cal') renderCal();
+  if (t === 'set') renderSettings();
+}
+document.querySelectorAll('.tab').forEach(b => b.onclick = () => showTab(b.dataset.tab));
+
+// ---------- sheets / modal / toast ----------
+let openSheet = null;
+function sheet(id) { closeSheets(); openSheet = $(id); $('scrim').classList.add('show'); openSheet.classList.add('show'); }
+function closeSheets() { document.querySelectorAll('.sheet').forEach(s => s.classList.remove('show')); $('modal').classList.remove('show'); $('scrim').classList.remove('show'); openSheet = null; }
+$('scrim').onclick = closeSheets;
+let modalCb = null;
+function confirmBox(title, text, yesLabel, cb, green) {
+  document.querySelectorAll('.sheet').forEach(s => s.classList.remove('show'));
+  $('mdT').textContent = title; $('mdP').textContent = text; $('mdYes').textContent = yesLabel;
+  $('mdYes').classList.toggle('green', !!green);
+  modalCb = cb; $('scrim').classList.add('show'); $('modal').classList.add('show');
+}
+$('mdNo').onclick = closeSheets;
+$('mdYes').onclick = () => { const cb = modalCb; closeSheets(); if (cb) cb(); };
+let toastT = 0;
+function toast(t) { const el = $('toast'); el.textContent = t; el.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(() => el.classList.remove('show'), 2200); }
+
+// ---------- add / edit ----------
+let editId = null;
+function openEdit(id) {
+  editId = id || null;
+  const d = id ? byId(id) : null;
+  $('eTitle').textContent = d ? 'Edit dhikr' : 'Add dhikr';
+  $('eName').value = d ? d.name : '';
+  $('eArab').value = d ? (d.ar || '') : '';
+  $('eTarget').value = d ? d.target : '';
+  $('eDelete').classList.toggle('hidden', !d);
+  sheet('sheetEdit');
+  if (!d) setTimeout(() => $('eName').focus(), 260);
+}
+document.querySelectorAll('[data-q]').forEach(b => b.onclick = () => { $('eTarget').value = b.dataset.q; });
+$('fab').onclick = () => openEdit(null);
+$('eSave').onclick = () => {
+  const name = $('eName').value.trim(), ar = $('eArab').value.trim(), target = Math.floor(+$('eTarget').value);
+  if (!name) { toast('Give your dhikr a name'); $('eName').focus(); return; }
+  if (!(target >= 1)) { toast('Set a daily target of at least 1'); $('eTarget').focus(); return; }
+  if (editId) {
+    const d = byId(editId); d.name = name; d.ar = ar; if (target !== d.target) noteTarget(d, target); d.target = target;
+    const e = entry(todayKey(), d.id); if (e) e.t = target;   // today's goal follows the new target
+    toast('Saved');
+  } else {
+    S.dhikrs.push({ id: uid(), name, ar, target, created: todayKey(), targets: [{ from: todayKey(), t: target }] });
+    toast('Dhikr added');
+  }
+  save(); closeSheets(); refresh();
+};
+$('eDelete').onclick = () => askDelete(editId);
+function askDelete(id) {
+  const d = byId(id);
+  confirmBox(`Delete "${d.name}"?`, 'It will be removed from your list. Its past days stay in your calendar.', 'Delete', () => {
+    d.deleted = todayKey();
+    if (d.created === d.deleted && !Object.values(S.log).some(day => day[id])) S.dhikrs = S.dhikrs.filter(x => x.id !== id);
+    save(); if (!$('counter').classList.contains('hidden')) closeCounter(); refresh(); toast('Deleted');
+  });
+}
+
+// ---------- options menu ----------
+let menuId = null;
+function openMenu(id) { menuId = id; $('mName').textContent = byId(id).name; sheet('sheetMenu'); }
+$('mCount').onclick = () => { closeSheets(); openCounter(menuId); };
+$('mEdit').onclick = () => openEdit(menuId);
+$('mHist').onclick = () => { closeSheets(); calFilter = menuId; showTab('cal'); };
+$('mDel').onclick = () => askDelete(menuId);
+
+// ---------- counter ----------
+let cur = null, lastDone = false;
+const C = 2 * Math.PI * 52;
+function openCounter(id) {
+  cur = id; $('counter').classList.remove('hidden');
+  const d = byId(id);
+  $('cName').textContent = d.name;
+  $('cArab').textContent = d.ar || '';
+  $('cArab').classList.toggle('hidden', !d.ar);
+  lastDone = countOn(todayKey(), id) >= targetOn(todayKey(), d);
+  drawCounter(); drawTools();
+  history.pushState({ c: 1 }, '');
+}
+function closeCounter() { cur = null; $('counter').classList.add('hidden'); refresh(); }
+$('cBack').onclick = () => { if (history.state && history.state.c) history.back(); else closeCounter(); };
+window.addEventListener('popstate', () => { if (cur) closeCounter(); else if (openSheet || $('modal').classList.contains('show')) closeSheets(); });
+$('cMore').onclick = () => openMenu(cur);
+function drawCounter() {
+  if (!cur) return;
+  const d = byId(cur), k = todayKey(), c = countOn(k, cur), t = targetOn(k, d), done = c >= t;
+  $('cNum').textContent = num(c);
+  $('cOf').textContent = `of ${num(t)}`;
+  $('cSub').textContent = done ? 'Target reached today' : `${num(t - c)} left today`;
+  const arc = $('cArc');
+  arc.setAttribute('stroke-dashoffset', C * (1 - Math.min(1, c / t)));
+  arc.setAttribute('stroke', done ? '#c69c45' : '#147a5d');
+  $('cDone').classList.toggle('hidden', !done);
+  $('cHint').textContent = c === 0 ? 'Tap anywhere here to count' : done ? 'Keep going if you like, it all counts' : 'Tap anywhere here to count';
+}
+function drawTools() {
+  $('tVib').classList.toggle('off', !S.settings.vibrate);
+  $('tSnd').classList.toggle('off', !S.settings.sound);
+}
+let actx = null;
+function click(freq = 880, dur = 0.05, vol = 0.12) {
+  if (!S.settings.sound) return;
+  try {
+    actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+    if (actx.state === 'suspended') actx.resume();
+    const t = actx.currentTime, o = actx.createOscillator(), g = actx.createGain();
+    o.type = 'sine'; o.frequency.setValueAtTime(freq, t);
+    g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.0008, t + dur);
+    o.connect(g); g.connect(actx.destination); o.start(t); o.stop(t + dur + 0.02);
+  } catch (e) {}
+}
+function vibrate(p) {
+  try { if (window.DhikrNative && DhikrNative.vibrate) { DhikrNative.vibrate(JSON.stringify(p)); return; } } catch (e) {}
+  try { navigator.vibrate && navigator.vibrate(p); } catch (e) {}
+}
+// Light tick on every count
+function buzz(p) { if (S.settings.vibrate) vibrate(p); }
+// Special patterns you can feel with your eyes closed (separate setting, so they work even with tap vibration off)
+const TARGET_BUZZ = [350, 180, 350];                    // long, long
+const ALL_DONE_BUZZ = [350, 180, 350, 180, 900];        // long, long, very long
+function buzzTarget(all) { if (S.settings.vibTarget !== false) vibrate(all ? ALL_DONE_BUZZ : TARGET_BUZZ); }
+function celebrate() {
+  const box = $('celebrate'); box.innerHTML = '';
+  const r = box.getBoundingClientRect();
+  for (let i = 0; i < 18; i++) {
+    const s = document.createElement('div'); s.className = 'star';
+    const a = Math.random() * Math.PI * 2, dist = 90 + Math.random() * 120;
+    s.style.left = r.width / 2 + 'px'; s.style.top = r.height / 2 + 'px';
+    s.style.setProperty('--dx', Math.cos(a) * dist + 'px'); s.style.setProperty('--dy', Math.sin(a) * dist + 'px');
+    s.style.animationDelay = Math.random() * 0.15 + 's';
+    s.innerHTML = `<svg viewBox="0 0 24 24" width="14" height="14"><path d="M12 2l2.2 6.6L21 9l-5.4 4.2L17.6 20 12 16.2 6.4 20l2-6.8L3 9l6.8-.4z" fill="${i % 2 ? '#c69c45' : '#1f9a74'}"/></svg>`;
+    box.appendChild(s);
+  }
+  setTimeout(() => (box.innerHTML = ''), 1500);
+}
+$('tapzone').addEventListener('pointerdown', e => {
+  if (!cur || e.button > 0) return;
+  const d = byId(cur), k = todayKey(), c = countOn(k, cur) + 1, t = d.target;
+  setCount(cur, c);
+  const z = $('tapzone').getBoundingClientRect();
+  const rp = document.createElement('div'); rp.className = 'ripple';
+  const sz = 160; rp.style.width = rp.style.height = sz + 'px';
+  rp.style.left = (e.clientX - z.left) + 'px'; rp.style.top = (e.clientY - z.top) + 'px';
+  $('tapzone').appendChild(rp); setTimeout(() => rp.remove(), 520);
+  const n = $('cNum'); n.classList.add('bump'); setTimeout(() => n.classList.remove('bump'), 90);
+  const nowDone = c >= targetOn(k, d);
+  if (nowDone && !lastDone) {
+    const all = allDone(k);
+    buzzTarget(all); click(660, 0.12, 0.16); setTimeout(() => click(990, 0.18, 0.16), 120);
+    celebrate();
+    toast(all ? 'All your dhikr are done today · MashaAllah' : 'Target reached · MashaAllah');
+  } else { buzz(12); click(); }
+  lastDone = nowDone;
+  drawCounter();
+});
+$('tUndo').onclick = () => {
+  if (!cur) return; const c = countOn(todayKey(), cur);
+  if (c > 0) { setCount(cur, c - 1); lastDone = c - 1 >= targetOn(todayKey(), byId(cur)); drawCounter(); }
+};
+$('tReset').onclick = () => {
+  if (!cur || countOn(todayKey(), cur) === 0) return;
+  confirmBox('Reset today’s count?', `This sets today's count for "${byId(cur).name}" back to 0.`, 'Reset', () => { setCount(cur, 0); lastDone = false; drawCounter(); });
+};
+$('tVib').onclick = () => { S.settings.vibrate = !S.settings.vibrate; save(); drawTools(); if (S.settings.vibrate) buzz(20); toast(S.settings.vibrate ? 'Vibration on' : 'Vibration off'); };
+$('tSnd').onclick = () => { S.settings.sound = !S.settings.sound; save(); drawTools(); click(); toast(S.settings.sound ? 'Sound on' : 'Sound off'); };
+
+// ---------- calendar ----------
+let calMonth = new Date(); calMonth.setDate(1);
+let calSel = todayKey(), calFilter = 'all';
+function renderCal() {
+  // filter options
+  const f = $('calFilter');
+  const opts = [['all', 'All dhikr']].concat(S.dhikrs.filter(d => !d.deleted).map(d => [d.id, d.name]))
+    .concat(S.dhikrs.filter(d => d.deleted).map(d => [d.id, d.name + ' (deleted)']));
+  if (!opts.some(o => o[0] === calFilter)) calFilter = 'all';
+  f.innerHTML = opts.map(o => `<option value="${o[0]}" ${o[0] === calFilter ? 'selected' : ''}>${esc(o[1])}</option>`).join('');
+
+  const y = calMonth.getFullYear(), m = calMonth.getMonth();
+  $('mTitle').textContent = calMonth.toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
+  const h1 = hijri(new Date(y, m, 1), { month: 'long', year: 'numeric' }), h2 = hijri(new Date(y, m + 1, 0), { month: 'long', year: 'numeric' });
+  $('mHijri').textContent = h1 === h2 ? h1 : `${h1.replace(/ \d+ AH$/, '')} – ${h2}`;
+  const first = new Date(y, m, 1), startDow = (first.getDay() + 6) % 7, daysIn = new Date(y, m + 1, 0).getDate();
+  const tk = todayKey();
+  let html = ['M', 'T', 'W', 'T', 'F', 'S', 'S'].map(w => `<div class="wd">${w}</div>`).join('');
+  for (let i = 0; i < startDow; i++) html += '<div class="day out"></div>';
+  let daysDone = 0, monthTotal = 0;
+  for (let d = 1; d <= daysIn; d++) {
+    const k = `${y}-${pad(m + 1)}-${pad(d)}`;
+    const x = ratioOn(k, calFilter);
+    monthTotal += x.total;
+    let cls = 'day';
+    if (k > tk) cls += ' future';
+    else if (x.n && x.done === x.n) { cls += ' full'; daysDone++; }
+    else if (x.r >= 0.5) cls += ' p2';
+    else if (x.any) cls += ' p1';
+    if (k === tk) cls += ' today';
+    if (k === calSel) cls += ' sel';
+    const hd = hijri(new Date(y, m, d), { day: 'numeric' });
+    html += `<button class="${cls}" data-k="${k}"><span>${d}</span><small class="hd">${hd}</small></button>`;
+  }
+  $('grid').innerHTML = html;
+  $('stDays').textContent = daysDone;
+  $('stTotal').textContent = num(monthTotal);
+  $('stBest').textContent = bestStreak(calFilter);
+  renderDay();
+}
+function renderDay() {
+  const k = calSel, d = fromKey(k);
+  $('dayTitle').textContent = k === todayKey() ? 'Today' : fmtG(d, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+  const ds = dhikrsOn(k, calFilter);
+  const head = `<div class="dayhead"><b>${fmtG(d, { day: 'numeric', month: 'short', year: 'numeric' })}</b><span>${hijri(d)}</span></div>`;
+  if (!ds.length || k > todayKey()) {
+    $('dayCard').innerHTML = head + `<div style="color:var(--muted);font-size:14px;padding:6px 0">${k > todayKey() ? 'This day hasn’t come yet.' : 'No dhikr were set up on this day.'}</div>`;
+  } else {
+    const x = ratioOn(k, calFilter);
+    $('dayCard').innerHTML = head + ds.map(dk => {
+      const c = countOn(k, dk.id), t = targetOn(k, dk);
+      return `<div class="row"><div class="n">${esc(dk.name)}<div class="mini"><i style="width:${Math.min(100, c / t * 100)}%;${c >= t ? 'background:var(--gold)' : ''}"></i></div></div><div class="v">${num(c)} / ${num(t)} ${c >= t ? '<span class="ok">✓</span>' : ''}</div></div>`;
+    }).join('') + `<div class="row"><div class="n">Total</div><div class="v">${num(x.total)}${x.done === x.n ? ' · All complete' : ''}</div></div>`;
+  }
+  // On this day in past years
+  const rows = [];
+  for (let back = 1; back <= 30; back++) {
+    const pd = new Date(d.getFullYear() - back, d.getMonth(), d.getDate());
+    if (pd.getMonth() !== d.getMonth()) continue;
+    const pk = keyOf(pd), x = ratioOn(pk, calFilter);
+    if (x.any) rows.push(`<div class="row"><div class="n">${back === 1 ? '1 year ago' : back + ' years ago'}<small>${fmtG(pd, { day: 'numeric', month: 'long', year: 'numeric' })}</small></div><div class="v">${num(x.total)}${x.done === x.n ? ' <span class="ok">✓</span>' : ''}</div></div>`);
+  }
+  $('otdWrap').classList.toggle('hidden', !rows.length);
+  $('otd').innerHTML = rows.join('');
+}
+$('grid').addEventListener('click', e => { const b = e.target.closest('[data-k]'); if (!b) return; calSel = b.dataset.k; renderCal(); });
+$('prevM').onclick = () => { calMonth.setMonth(calMonth.getMonth() - 1); renderCal(); };
+$('nextM').onclick = () => { calMonth.setMonth(calMonth.getMonth() + 1); renderCal(); };
+$('calFilter').onchange = e => { calFilter = e.target.value; renderCal(); };
+
+// ---------- settings ----------
+function renderSettings() {
+  const s = S.settings;
+  $('swRemind').classList.toggle('on', s.remind);
+  $('swVib').classList.toggle('on', s.vibrate);
+  $('swVibT').classList.toggle('on', s.vibTarget !== false);
+  $('swSound').classList.toggle('on', s.sound);
+  $('tMorning').value = s.morning; $('tNight').value = s.night;
+  const a = s.hijriAdj || 0;
+  $('hjToday').textContent = 'Today: ' + hijri(new Date());
+  $('hjAdjTxt').textContent = a === 0 ? 'Calculated date, no change' : `Moved ${Math.abs(a)} day${Math.abs(a) > 1 ? 's' : ''} ${a > 0 ? 'later' : 'earlier'}`;
+  $('tMorning').disabled = $('tNight').disabled = !s.remind;
+  const native = !!(window.DhikrNative && DhikrNative.update);
+  let last = '';
+  try { last = window.DhikrNative && DhikrNative.lastBackup ? DhikrNative.lastBackup() : ''; } catch (e) {}
+  $('bkNote').textContent = native
+    ? `Your dhikr are saved on this phone, and a backup file is kept automatically in Documents › My Dhikr${last ? ' (last saved ' + last + ')' : ''}. On a new phone, tap Restore and pick that file.`
+    : 'Your dhikr and history are saved in this browser. Save a backup now and then so you can bring everything back on another phone.';
+  $('remNote').textContent = native
+    ? `You'll get a reminder at ${s.morning} and ${s.night}, unless all your dhikr are already done for the day.`
+    : 'Reminders will pop up once this is installed as an app on your phone. In this test version your times are saved, but notifications can’t be sent.';
+}
+function adjHijri(n) { const a = Math.max(-2, Math.min(2, (S.settings.hijriAdj || 0) + n)); S.settings.hijriAdj = a; save(); renderSettings(); }
+$('hjMinus').onclick = () => adjHijri(-1);
+$('hjPlus').onclick = () => adjHijri(1);
+$('swRemind').onclick = () => { S.settings.remind = !S.settings.remind; save(); renderSettings(); };
+$('swVib').onclick = () => { S.settings.vibrate = !S.settings.vibrate; save(); renderSettings(); };
+$('swVibT').onclick = () => { S.settings.vibTarget = S.settings.vibTarget === false; save(); renderSettings(); if (S.settings.vibTarget) vibrate(TARGET_BUZZ); };
+$('swSound').onclick = () => { S.settings.sound = !S.settings.sound; save(); renderSettings(); click(); };
+$('tMorning').onchange = e => { if (e.target.value) { S.settings.morning = e.target.value; save(); renderSettings(); } };
+$('tNight').onchange = e => { if (e.target.value) { S.settings.night = e.target.value; save(); renderSettings(); } };
+$('bkSave').onclick = async () => {
+  const text = wrapBackup();
+  try { if (window.DhikrNative && DhikrNative.shareBackup) { DhikrNative.shareBackup(text); return; } } catch (e) {}
+  try { await navigator.clipboard.writeText(text); toast('Backup copied. Paste it somewhere safe.'); }
+  catch (e) { $('rText').value = text; sheet('sheetRestore'); toast('Copy the text in the box'); }
+};
+$('bkRestore').onclick = () => { $('rText').value = ''; sheet('sheetRestore'); };
+function restoreFrom(text) {
+  let d;
+  try { d = unwrapBackup(text); } catch (e) { toast('That doesn’t look like a My Dhikr backup'); return; }
+  const days = Object.keys(d.log).length, n = d.dhikrs.filter(x => !x.deleted).length;
+  const go = () => { S = d; FRESH = false; save(); closeSheets(); showTab('today'); toast(`Restored ${n} dhikr and ${days} day${days === 1 ? '' : 's'} of history`); };
+  if (FRESH) go();
+  else confirmBox('Replace your data?', `This phone's dhikr will be replaced with the backup: ${n} dhikr and ${days} day${days === 1 ? '' : 's'} of history.`, 'Restore', go, true);
+}
+$('rGo').onclick = () => restoreFrom($('rText').value);
+$('rPick').onclick = () => $('rFile').click();
+$('rFile').onchange = e => {
+  const f = e.target.files && e.target.files[0]; if (!f) return;
+  const r = new FileReader(); r.onload = () => restoreFrom(String(r.result)); r.readAsText(f);
+  e.target.value = '';
+};
+$('wFresh').onclick = () => { FRESH = false; save(); closeSheets(); };
+$('wRestore').onclick = () => { $('rText').value = ''; sheet('sheetRestore'); };
+
+// ---------- refresh / day change ----------
+function refresh() { if (tab === 'today') renderToday(); else if (tab === 'cal') renderCal(); else renderSettings(); drawCounter(); }
+let lastDay = todayKey();
+setInterval(() => { if (todayKey() !== lastDay) { lastDay = todayKey(); lastDone = false; refresh(); syncNative(); } }, 30000);
+document.addEventListener('visibilitychange', () => { if (!document.hidden) refresh(); });
+
+showTab('today');
+syncNative();
+if (FRESH) setTimeout(() => sheet('sheetWelcome'), 350);
+})();
+</script>
+</body>
+</html>
