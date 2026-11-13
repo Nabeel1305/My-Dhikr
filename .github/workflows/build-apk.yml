@@ -19,14 +19,13 @@ jobs:
           gradle-version: '8.7'
       - name: Build signed APK
         env:
-          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
-          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_ALIAS: mydhikr
           BUILD_NUMBER: ${{ github.run_number }}
         run: |
+          if [ -z "$KEYSTORE_PASSWORD" ]; then echo "::error::Add the KEYSTORE_PASSWORD secret (Settings > Secrets and variables > Actions) and run this again."; exit 1; fi
           echo "sdk.dir=$ANDROID_HOME" > local.properties
-          echo "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/release.p12"
-          export KEYSTORE_FILE="$RUNNER_TEMP/release.p12"
+          export KEYSTORE_FILE="$GITHUB_WORKSPACE/signing/release.p12"
           gradle :app:assembleRelease --no-daemon
           cp app/build/outputs/apk/release/app-release.apk MyDhikr.apk
       - uses: actions/upload-artifact@v4
