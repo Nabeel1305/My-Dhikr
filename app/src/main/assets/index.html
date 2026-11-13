@@ -97,6 +97,16 @@ svg{display:block}
 .day .hd{font-size:9.5px;font-weight:700;opacity:.55;line-height:1;margin-top:2px;font-family:Nunito,sans-serif}
 .day.full .hd{opacity:.8}
 .day .dot{position:absolute;bottom:5px;width:4px;height:4px;border-radius:50%;background:var(--gold)}
+.seg2{display:grid;grid-template-columns:1fr 1fr;background:#ebe6d8;border-radius:14px;padding:4px;gap:4px}
+.seg2 button{padding:9px;border-radius:11px;font-weight:800;font-size:14px;color:var(--muted)}
+.seg2 button.on{background:#fff;color:var(--green);box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.ystrip{display:flex;gap:6px;overflow-x:auto;margin:0 -4px 12px;padding:2px 4px 4px;scrollbar-width:none}
+.ystrip::-webkit-scrollbar{display:none}
+.ym{flex:0 0 auto;padding:7px 11px;border-radius:12px;background:#faf8f2;font-weight:700;font-size:12.5px;color:var(--ink);text-align:center;border:1.5px solid transparent}
+.ym small{display:block;font-size:10.5px;font-weight:700;color:var(--muted);margin-top:1px}
+.ym.on{background:var(--green);color:#fff}.ym.on small{color:rgba(255,255,255,.8)}
+.ym.now{border-color:var(--gold)}
+.calnav .t .arm{font-family:Amiri,serif;font-size:17px;color:var(--green);display:block;line-height:1.3}
 .legend{display:flex;gap:14px;justify-content:center;margin-top:12px;font-size:11.5px;color:var(--muted)}
 .legend span{display:inline-flex;align-items:center;gap:5px}
 .legend i{width:12px;height:12px;border-radius:4px;display:inline-block}
@@ -245,7 +255,8 @@ svg{display:block}
   <section class="view hidden" id="v-cal">
     <div class="phead"><div class="wrap"><h1>Calendar</h1><p>Look back at every day of your dhikr</p></div></div>
     <div class="wrap" style="margin-top:16px">
-      <select class="select" id="calFilter"></select>
+      <div class="seg2" id="calMode"><button data-cm="hijri">Islamic</button><button data-cm="greg">Gregorian</button></div>
+      <select class="select" id="calFilter" style="margin-top:10px"></select>
       <div class="stats">
         <div class="stat"><b id="stDays">0</b><span>days complete</span></div>
         <div class="stat"><b id="stTotal">0</b><span>total this month</span></div>
@@ -257,6 +268,7 @@ svg{display:block}
           <div class="t"><b id="mTitle"></b><span id="mHijri"></span></div>
           <button class="navbtn" id="nextM" aria-label="Next month"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg></button>
         </div>
+        <div class="ystrip" id="ystrip"></div>
         <div class="grid" id="grid"></div>
         <div class="legend"><span><i style="background:#eef6f1"></i>Started</span><span><i style="background:var(--mint2)"></i>Over half</span><span><i style="background:var(--green2)"></i>Complete</span></div>
       </div>
@@ -529,16 +541,30 @@ function setCount(id, c) {
 
 // ---------- formatting ----------
 const fmtG = (d, o) => d.toLocaleDateString('en-GB', o);
-const HFMT = {};
+const HM_EN = ['Muharram', 'Safar', "Rabi' al-Awwal", "Rabi' al-Thani", 'Jumada al-Ula', 'Jumada al-Akhirah', 'Rajab', "Sha'ban", 'Ramadan', 'Shawwal', "Dhul Qa'dah", 'Dhul Hijjah'];
+const HM_AR = ['مُحَرَّم', 'صَفَر', 'رَبِيع الأَوَّل', 'رَبِيع الثَّانِي', 'جُمَادَى الأُولَى', 'جُمَادَى الآخِرَة', 'رَجَب', 'شَعْبَان', 'رَمَضَان', 'شَوَّال', 'ذُو القَعْدَة', 'ذُو الحِجَّة'];
+let HPF = null; const HCACHE = new Map();
+// Islamic date of a day (with the user's moon-sighting adjustment): {d, m, y}
+function hParts(d) {
+  const adj = (S.settings && S.settings.hijriAdj) || 0;
+  const ck = d.getFullYear() * 10000 + d.getMonth() * 100 + d.getDate() + '|' + adj;
+  if (HCACHE.has(ck)) return HCACHE.get(ck);
+  HPF = HPF || new Intl.DateTimeFormat('en-u-ca-islamic-umalqura-nu-latn', { day: 'numeric', month: 'numeric', year: 'numeric' });
+  const x = new Date(d.getFullYear(), d.getMonth(), d.getDate() + adj, 12), o = {};
+  for (const q of HPF.formatToParts(x)) o[q.type] = q.value;
+  const r = { d: parseInt(o.day, 10), m: parseInt(o.month, 10), y: parseInt(o.year, 10) };
+  HCACHE.set(ck, r); return r;
+}
 function hijri(d, opts = { day: 'numeric', month: 'long', year: 'numeric' }) {
   try {
-    const adj = (S.settings && S.settings.hijriAdj) || 0;
-    const x = new Date(d.getFullYear(), d.getMonth(), d.getDate() + adj, 12);
-    const key = JSON.stringify(opts);
-    HFMT[key] = HFMT[key] || new Intl.DateTimeFormat('en-u-ca-islamic-umalqura', opts);
-    return HFMT[key].format(x).replace(/\s?AH$/, ' AH');
+    const h = hParts(d), D = 'day' in opts, M = 'month' in opts, Y = 'year' in opts;
+    if (D && !M) return String(h.d);
+    return ((D ? h.d + ' ' : '') + (M ? HM_EN[h.m - 1] : '') + (Y ? ' ' + h.y + ' AH' : '')).trim();
   } catch (e) { return ''; }
 }
+// First day of the Islamic month that contains d, and all days of that month
+function hMonthStart(d) { const x = new Date(d.getFullYear(), d.getMonth(), d.getDate()); let g = 0; while (hParts(x).d > 1 && g++ < 32) x.setDate(x.getDate() - 1); return x; }
+function hMonthDays(start) { const out = [], m = hParts(start).m, x = new Date(start); while (hParts(x).m === m && out.length < 31) { out.push(new Date(x)); x.setDate(x.getDate() + 1); } return out; }
 const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const num = n => n.toLocaleString('en');
 
@@ -661,7 +687,7 @@ let menuId = null;
 function openMenu(id) { menuId = id; $('mName').textContent = byId(id).name; sheet('sheetMenu'); }
 $('mCount').onclick = () => { closeSheets(); openCounter(menuId); };
 $('mEdit').onclick = () => openEdit(menuId);
-$('mHist').onclick = () => { closeSheets(); calFilter = menuId; showTab('cal'); };
+$('mHist').onclick = () => { closeSheets(); calFilter = menuId; hStart = null; showTab('cal'); };
 $('mDel').onclick = () => askDelete(menuId);
 
 // ---------- counter ----------
@@ -765,38 +791,76 @@ $('tVib').onclick = () => { S.settings.vibrate = !S.settings.vibrate; save(); dr
 $('tSnd').onclick = () => { S.settings.sound = !S.settings.sound; save(); drawTools(); click(); toast(S.settings.sound ? 'Sound on' : 'Sound off'); };
 
 // ---------- calendar ----------
-let calMonth = new Date(); calMonth.setDate(1);
+let calMonth = new Date(); calMonth.setDate(1);           // Gregorian view
+let hStart = null;                                           // Islamic view: first day of the shown month
 let calSel = todayKey(), calFilter = 'all';
+const calModeNow = () => (S.settings.calMode === 'greg' ? 'greg' : 'hijri');
+function cell(k, big, small) {
+  const tk = todayKey(), x = ratioOn(k, calFilter);
+  let cls = 'day';
+  if (k > tk) cls += ' future';
+  else if (x.n && x.done === x.n) cls += ' full';
+  else if (x.r >= 0.5) cls += ' p2';
+  else if (x.any) cls += ' p1';
+  if (k === tk) cls += ' today';
+  if (k === calSel) cls += ' sel';
+  return { html: `<button class="${cls}" data-k="${k}"><span>${big}</span><small class="hd">${small}</small></button>`, x, done: k <= tk && x.n && x.done === x.n };
+}
 function renderCal() {
-  // filter options
   const f = $('calFilter');
   const opts = [['all', 'All dhikr']].concat(S.dhikrs.filter(d => !d.deleted).map(d => [d.id, d.name]))
     .concat(S.dhikrs.filter(d => d.deleted).map(d => [d.id, d.name + ' (deleted)']));
   if (!opts.some(o => o[0] === calFilter)) calFilter = 'all';
   f.innerHTML = opts.map(o => `<option value="${o[0]}" ${o[0] === calFilter ? 'selected' : ''}>${esc(o[1])}</option>`).join('');
-
-  const y = calMonth.getFullYear(), m = calMonth.getMonth();
-  $('mTitle').textContent = calMonth.toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
-  const h1 = hijri(new Date(y, m, 1), { month: 'long', year: 'numeric' }), h2 = hijri(new Date(y, m + 1, 0), { month: 'long', year: 'numeric' });
-  $('mHijri').textContent = h1 === h2 ? h1 : `${h1.replace(/ \d+ AH$/, '')} – ${h2}`;
-  const first = new Date(y, m, 1), startDow = (first.getDay() + 6) % 7, daysIn = new Date(y, m + 1, 0).getDate();
-  const tk = todayKey();
+  const mode = calModeNow();
+  document.querySelectorAll('[data-cm]').forEach(b => b.classList.toggle('on', b.dataset.cm === mode));
   let html = ['M', 'T', 'W', 'T', 'F', 'S', 'S'].map(w => `<div class="wd">${w}</div>`).join('');
-  for (let i = 0; i < startDow; i++) html += '<div class="day out"></div>';
   let daysDone = 0, monthTotal = 0;
-  for (let d = 1; d <= daysIn; d++) {
-    const k = `${y}-${pad(m + 1)}-${pad(d)}`;
-    const x = ratioOn(k, calFilter);
-    monthTotal += x.total;
-    let cls = 'day';
-    if (k > tk) cls += ' future';
-    else if (x.n && x.done === x.n) { cls += ' full'; daysDone++; }
-    else if (x.r >= 0.5) cls += ' p2';
-    else if (x.any) cls += ' p1';
-    if (k === tk) cls += ' today';
-    if (k === calSel) cls += ' sel';
-    const hd = hijri(new Date(y, m, d), { day: 'numeric' });
-    html += `<button class="${cls}" data-k="${k}"><span>${d}</span><small class="hd">${hd}</small></button>`;
+
+  if (mode === 'hijri') {
+    if (!hStart) hStart = hMonthStart(fromKey(calSel));
+    const days = hMonthDays(hStart), h = hParts(hStart);
+    const g1 = days[0], g2 = days[days.length - 1];
+    $('mTitle').textContent = `${HM_EN[h.m - 1]} ${h.y}`;
+    const gr = g1.getFullYear() === g2.getFullYear()
+      ? `${fmtG(g1, { day: 'numeric', month: 'short' })} – ${fmtG(g2, { day: 'numeric', month: 'short', year: 'numeric' })}`
+      : `${fmtG(g1, { day: 'numeric', month: 'short', year: 'numeric' })} – ${fmtG(g2, { day: 'numeric', month: 'short', year: 'numeric' })}`;
+    $('mHijri').innerHTML = `<span class="arm">${HM_AR[h.m - 1]}</span>${gr}`;
+    for (let i = 0; i < (g1.getDay() + 6) % 7; i++) html += '<div class="day out"></div>';
+    days.forEach((d, i) => {
+      const small = i === 0 || d.getDate() === 1 ? fmtG(d, { day: 'numeric', month: 'short' }) : d.getDate();
+      const c = cell(keyOf(d), hParts(d).d, small);
+      html += c.html; monthTotal += c.x.total; if (c.done) daysDone++;
+    });
+    // the whole Islamic year, Muharram to Dhul Hijjah
+    let m1 = new Date(hStart), g = 0;
+    while (hParts(m1).m !== 1 && g++ < 13) { m1.setDate(m1.getDate() - 1); m1 = hMonthStart(m1); }
+    const nowH = hParts(new Date()), tk = todayKey();
+    let strip = '', cur = new Date(m1);
+    for (let mi = 0; mi < 12; mi++) {
+      const ds = hMonthDays(cur), hp = hParts(cur);
+      let full = 0; for (const d of ds) { const k = keyOf(d); if (k <= tk && allDone(k, calFilter)) full++; }
+      const isOn = hp.m === h.m && hp.y === h.y, isNow = hp.m === nowH.m && hp.y === nowH.y;
+      const sub = keyOf(ds[0]) > tk ? '·' : `${full} ✓`;
+      strip += `<button class="ym${isOn ? ' on' : ''}${isNow ? ' now' : ''}" data-hs="${keyOf(cur)}">${HM_EN[hp.m - 1]}<small>${sub}</small></button>`;
+      cur = new Date(ds[ds.length - 1]); cur.setDate(cur.getDate() + 1);
+    }
+    $('ystrip').innerHTML = `<div class="ym" style="background:transparent;padding-left:2px">${h.y}<small>AH</small></div>` + strip;
+    $('ystrip').classList.remove('hidden');
+    setTimeout(() => { const on = $('ystrip').querySelector('.ym.on'); if (on) on.scrollIntoView({ block: 'nearest', inline: 'center' }); }, 0);
+  } else {
+    $('ystrip').classList.add('hidden');
+    const y = calMonth.getFullYear(), m = calMonth.getMonth();
+    $('mTitle').textContent = calMonth.toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
+    const h1 = hijri(new Date(y, m, 1), { month: 'long', year: 'numeric' }), h2 = hijri(new Date(y, m + 1, 0), { month: 'long', year: 'numeric' });
+    $('mHijri').textContent = h1 === h2 ? h1 : `${h1.replace(/ \d+ AH$/, '')} – ${h2}`;
+    const first = new Date(y, m, 1), daysIn = new Date(y, m + 1, 0).getDate();
+    for (let i = 0; i < (first.getDay() + 6) % 7; i++) html += '<div class="day out"></div>';
+    for (let d = 1; d <= daysIn; d++) {
+      const dt = new Date(y, m, d), hp = hParts(dt);
+      const c = cell(keyOf(dt), d, hp.d);
+      html += c.html; monthTotal += c.x.total; if (c.done) daysDone++;
+    }
   }
   $('grid').innerHTML = html;
   $('stDays').textContent = daysDone;
@@ -830,8 +894,22 @@ function renderDay() {
   $('otd').innerHTML = rows.join('');
 }
 $('grid').addEventListener('click', e => { const b = e.target.closest('[data-k]'); if (!b) return; calSel = b.dataset.k; renderCal(); });
-$('prevM').onclick = () => { calMonth.setMonth(calMonth.getMonth() - 1); renderCal(); };
-$('nextM').onclick = () => { calMonth.setMonth(calMonth.getMonth() + 1); renderCal(); };
+$('prevM').onclick = () => {
+  if (calModeNow() === 'hijri') { const d = new Date(hStart); d.setDate(d.getDate() - 1); hStart = hMonthStart(d); }
+  else calMonth.setMonth(calMonth.getMonth() - 1);
+  renderCal();
+};
+$('nextM').onclick = () => {
+  if (calModeNow() === 'hijri') { const ds = hMonthDays(hStart), d = new Date(ds[ds.length - 1]); d.setDate(d.getDate() + 1); hStart = d; }
+  else calMonth.setMonth(calMonth.getMonth() + 1);
+  renderCal();
+};
+$('ystrip').addEventListener('click', e => { const b = e.target.closest('[data-hs]'); if (!b) return; hStart = fromKey(b.dataset.hs); renderCal(); });
+document.querySelectorAll('[data-cm]').forEach(b => b.onclick = () => {
+  S.settings.calMode = b.dataset.cm; save();
+  const sel = fromKey(calSel); hStart = hMonthStart(sel); calMonth = new Date(sel.getFullYear(), sel.getMonth(), 1);
+  renderCal();
+});
 $('calFilter').onchange = e => { calFilter = e.target.value; renderCal(); };
 
 // ---------- settings ----------
@@ -856,7 +934,7 @@ function renderSettings() {
     ? `You'll get a reminder at ${s.morning} and ${s.night}, unless all your dhikr are already done for the day.`
     : 'Reminders will pop up once this is installed as an app on your phone. In this test version your times are saved, but notifications can’t be sent.';
 }
-function adjHijri(n) { const a = Math.max(-2, Math.min(2, (S.settings.hijriAdj || 0) + n)); S.settings.hijriAdj = a; save(); renderSettings(); }
+function adjHijri(n) { const a = Math.max(-2, Math.min(2, (S.settings.hijriAdj || 0) + n)); S.settings.hijriAdj = a; hStart = null; save(); renderSettings(); }
 $('hjMinus').onclick = () => adjHijri(-1);
 $('hjPlus').onclick = () => adjHijri(1);
 $('swRemind').onclick = () => { S.settings.remind = !S.settings.remind; save(); renderSettings(); };
